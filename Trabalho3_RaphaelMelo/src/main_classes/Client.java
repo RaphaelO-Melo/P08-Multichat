@@ -38,6 +38,7 @@ public class Client extends javax.swing.JFrame{
     //Variável que e refere ao spcket do cliente
     private Socket clientSocket;
     private OutputStream output;
+    private TextListenerThread tL;
     
     //Construtor da estrutura do cliente
     public Client(){
@@ -53,7 +54,7 @@ public class Client extends javax.swing.JFrame{
         jTextArea.setColumns(20);
         jTextArea.setEditable(false);
         jTextArea.setRows(5);
-        
+
         //Seta o painel de scroll para atuar na área de texto do chat
         jScrollPane1.setViewportView(jTextArea);
 
@@ -63,7 +64,10 @@ public class Client extends javax.swing.JFrame{
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 //Chama método para tratar mensagem para ser enviada
-                sendMessage(jTextField.getText());
+                if (!"".equals(jTextField.getText())) {
+                    sendMessage(jTextField.getText());
+                }
+                jTextField.setText("");
             }
         });
 
@@ -72,26 +76,33 @@ public class Client extends javax.swing.JFrame{
         closeButton.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                //Chama método que fecha sala
+
+                tL.stopThread();
+                try {
+                    clientSocket.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                System.exit(0);                
             }
         });
-			
+
         //Configura layout da janela
-	layout = new BorderLayout( 5, 5 ); 
+        layout = new BorderLayout(5, 5);
         getContentPane().setLayout(layout);
-	add( jScrollPane1, BorderLayout.CENTER ); 
-	add( jTextField, BorderLayout.SOUTH ); 
-	add( sendButton, BorderLayout.EAST ); 
-	add( closeButton, BorderLayout.NORTH ); 		
-     }
+        add(jScrollPane1, BorderLayout.CENTER);
+        add(jTextField, BorderLayout.SOUTH);
+        add(sendButton, BorderLayout.EAST);
+        add(closeButton, BorderLayout.NORTH);
+    }
 
     /**
      * Método que envia mensagem para o servidor
-     * 
-     * @param message : mensagem a ser enviada 
+     *
+     * @param message : mensagem a ser enviada
      */
-    private void sendMessage(String message){
-        
+    private void sendMessage(String message) {
+
         PrintWriter pw = new PrintWriter(output, true);
         pw.println(message);
         
@@ -124,7 +135,7 @@ public class Client extends javax.swing.JFrame{
             //Manda primeira mensagem que é o nome do cliente
             PrintWriter pw = new PrintWriter(output, true);
             pw.println(this.clientUserID);
-            TextListenerThread tL = new TextListenerThread(clientSocket.getInputStream(), this.jTextArea);
+            tL = new TextListenerThread(clientSocket.getInputStream(), this.jTextArea);
             tL.start();
             
         } catch (IOException ex) {

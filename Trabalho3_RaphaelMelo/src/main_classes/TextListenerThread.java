@@ -14,6 +14,7 @@ import javax.swing.JTextArea;
 public class TextListenerThread extends Thread{
     private InputStream input;
     private JTextArea textArea;
+    public boolean canGo = true;
     
     public TextListenerThread(InputStream input, JTextArea textArea){
         this.input = input;
@@ -22,7 +23,7 @@ public class TextListenerThread extends Thread{
 
     @Override
     public void run() {
-        while (true) {
+        while (canGo) {
             try {
                 InputStreamReader reader = new InputStreamReader(input);
                 BufferedReader br = new BufferedReader(reader);
@@ -33,5 +34,9 @@ public class TextListenerThread extends Thread{
                 Logger.getLogger(TextListenerThread.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+    }
+    
+    public void stopThread(){
+        this.canGo = false;
     }
 }

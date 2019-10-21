@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 public class Server {
     //Socket do servidor
     private ServerSocket serverSocket;
-    private static ArrayList<ClientModel> clients;
+    public static ArrayList<ClientModel> clients;
     
     //Constutor da classe
     public Server(int port){
@@ -28,32 +28,36 @@ public class Server {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null,ex);
         }
     }
-    
+
     //Método que inicializa e bota servidor para receber e tratar clientes
     private void startServer() {
         while (true) {
             System.out.println("Esperando clientes se conectarem...");
             try {
-                //Aceita o cliente
-                Socket client = serverSocket.accept();
-                //Obtem inputStream dele
-                InputStream input = client.getInputStream();
-                //Lê a primeira mensagem que é o nome do cliente
-                InputStreamReader reader = new InputStreamReader(input);
-                BufferedReader br = new BufferedReader(reader);
-                String clientID = br.readLine();
-                //Cria o modelo do cliente em que o servidor guardará o nome 
-                //associado com o socket
-                ClientModel clientModel = new ClientModel(clientID, client);
-                //Adiciona o cliente na lista de modelos de clientes
-                clients.add(clientModel);
-                //Inicia thread que vai cuidar de escutar o cliente
-                ClientListener threadClient = new ClientListener(clientModel);
-                threadClient.start();
-                
-                //Sinaliza que cliente foi conectado
-                System.out.println(clientID + " conectado");
-                
+
+                if (clients != null && clients.size() < 15) {
+                    //Aceita o cliente
+                    Socket client = serverSocket.accept();
+                    //Obtem inputStream dele
+                    InputStream input = client.getInputStream();
+                    //Lê a primeira mensagem que é o nome do cliente
+                    InputStreamReader reader = new InputStreamReader(input);
+                    BufferedReader br = new BufferedReader(reader);
+                    String clientID = br.readLine();
+                    //Cria o modelo do cliente em que o servidor guardará o nome 
+                    //associado com o socket
+                    ClientModel clientModel = new ClientModel(clientID, client);
+                    //Adiciona o cliente na lista de modelos de clientes
+                    clients.add(clientModel);
+                    //Inicia thread que vai cuidar de escutar o cliente
+                    ClientListener threadClient = new ClientListener(clientModel);
+                    threadClient.start();
+
+                    //Sinaliza que cliente foi conectado
+                    sendMessageToAll(clientModel.getClientID() + " conectado...");
+                }else{
+                    System.out.println("Servidor cheio");
+                }
             } catch (IOException ex) {
                 Logger.getLogger(Server.class.getName());
             }
@@ -67,6 +71,11 @@ public class Server {
         server.startServer();
     }
     
+    /**
+     * Método que manda uma mensagem para todos os clientes
+     * 
+     * @param message : mensagem passada 
+     */
     public static void sendMessageToAll(String message){
         System.out.println("Mensagem que será passada para todo mundo: " + message);
         
@@ -77,8 +86,6 @@ public class Server {
             } catch (IOException ex) {
                 Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
         }
-        
     }
 }

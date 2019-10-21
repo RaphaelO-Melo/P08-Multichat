@@ -14,6 +14,9 @@ public class ClientListener extends Thread {
     //Input que quando recebido será o do cliente
     private InputStream input;
     private ClientModel clientModel;
+    
+    //Booleana que mantém a thread rodando
+    public boolean canGo = true;
 
     public ClientListener(ClientModel clientModel) {
         try {
@@ -26,18 +29,29 @@ public class ClientListener extends Thread {
 
     @Override
     public void run() {
-        while (true) {
+        while (canGo) {
             InputStreamReader reader = new InputStreamReader(input);
             BufferedReader br = new BufferedReader(reader);
             try {
                 String message = br.readLine();
-                System.out.println("Mensagem recebida pela thread: " + message);
-                Server.sendMessageToAll(clientModel.getClientID() + ": " +message);
+                if(message == null){
+                    canGo = false;
+                    Server.sendMessageToAll(clientModel.getClientID() + " saiu do chat");
+                    return;
+                }
+                if (!" ".equals(message)){
+                    System.out.println("Mensagem recebida pela thread: " + message);
+                    Server.sendMessageToAll(clientModel.getClientID() + ": " +message);
+                }
+                
                 
             } catch (IOException ex) {
                 Logger.getLogger(ClientListener.class.getName());
             }
         }
-
+    }
+    
+    public void stopThread(){
+        this.canGo = false;
     }
 }
