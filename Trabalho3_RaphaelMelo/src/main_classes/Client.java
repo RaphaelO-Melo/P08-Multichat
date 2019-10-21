@@ -7,6 +7,12 @@
 package main_classes;
 
 import java.awt.BorderLayout;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -28,6 +34,10 @@ public class Client extends javax.swing.JFrame{
     private JTextArea       jTextArea;
     private JTextField      jTextField;
     private BorderLayout    layout; 
+    
+    //Variável que e refere ao spcket do cliente
+    private Socket clientSocket;
+    private OutputStream output;
     
     //Construtor da estrutura do cliente
     public Client(){
@@ -76,12 +86,14 @@ public class Client extends javax.swing.JFrame{
      }
 
     /**
-     * Método que envia menssagem para o servidor
+     * Método que envia mensagem para o servidor
      * 
-     * @param message : menssagem a ser enviada 
+     * @param message : mensagem a ser enviada 
      */
     private void sendMessage(String message){
-        System.out.println(message);
+        
+        PrintWriter pw = new PrintWriter(output, true);
+        pw.println(message);
         
     }
     /**
@@ -103,6 +115,23 @@ public class Client extends javax.swing.JFrame{
         this.setVisible(true);
     }
     
+    private void connectServer(){
+        try {
+            //Cria socket
+            clientSocket = new Socket("localhost", 5555);
+            //Obtem o output do cliente
+            output = clientSocket.getOutputStream();
+            //Manda primeira mensagem que é o nome do cliente
+            PrintWriter pw = new PrintWriter(output, true);
+            pw.println(this.clientUserID);
+            TextListenerThread tL = new TextListenerThread(clientSocket.getInputStream(), this.jTextArea);
+            tL.start();
+            
+        } catch (IOException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null,ex);
+        }
+    }
+    
     /**
      * MainClass chamada no início da execução do programa
      * @param args
@@ -115,5 +144,9 @@ public class Client extends javax.swing.JFrame{
         client.askUserID();
         //Chama o método que configura a tela do cliente
         client.configScreen();
+        //Chama método que cria socket e conecta com servidor
+        client.connectServer();
+        //Cria thread que escuta e modifica a caixa de texto dos usuários
+        
     }
 }
