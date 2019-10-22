@@ -3,25 +3,32 @@
  *                        Centro Universitário SENAC                          *
  *                                                                            *
  *                  Técnologia em Jogos Digitais IV - 2019                    *
+ *                          Raphael Oliveira Melo                             *
  ******************************************************************************/
 package main_classes;
 
-import java.awt.BorderLayout;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
+//Imports
 import java.net.Socket;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
+import java.io.PrintWriter;
+import java.io.IOException;
+import javax.swing.JButton;
+import java.io.OutputStream;
 import javax.swing.JTextArea;
+import java.awt.BorderLayout;
 import javax.swing.JTextField;
+import java.util.logging.Level;
+import javax.swing.JScrollPane;
+import javax.swing.JOptionPane;
+import java.util.logging.Logger;
 
 /**
  * @author Raphael Melo
+ * 
+ * Class Client: Classe responsável por criar o cliente e a sua interface
+ *               gráfica, aqui são armazenadas e manipuladas as informações 
+ *               para a sua criação.
+ * 
  */
 public class Client extends javax.swing.JFrame{
     //Variável que irá guardar o nome de usuário do cliente
@@ -35,12 +42,12 @@ public class Client extends javax.swing.JFrame{
     private JTextField      jTextField;
     private BorderLayout    layout; 
     
-    //Variável que e refere ao spcket do cliente
-    private Socket clientSocket;
-    private OutputStream output;
-    private TextListenerThread tL;
+    //Variável que e refere ao socket do cliente
+    private Socket             clientSocket;
+    private OutputStream       output;
+    private TextListenerThread textListener;
     
-    //Construtor da estrutura do cliente
+    //Construtor do cliente do cliente
     public Client(){
         
         //Cria todos os elementos da tela
@@ -58,7 +65,7 @@ public class Client extends javax.swing.JFrame{
         //Seta o painel de scroll para atuar na área de texto do chat
         jScrollPane1.setViewportView(jTextArea);
 
-        //Configura o botão de enviar menssagem e atirbui um listenner para ele
+        //Configura o botão de enviar menssagem e atribui um listener para ele
         sendButton.setText("Enviar Mensagem");
         sendButton.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -76,12 +83,13 @@ public class Client extends javax.swing.JFrame{
         closeButton.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-
-                tL.stopThread();
+                //Para a thread que recebe as mensagens
+                textListener.stopThread();
                 try {
+                    //Fecha socket
                     clientSocket.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(Client.class.getName());
                 }
                 System.exit(0);                
             }
@@ -102,7 +110,6 @@ public class Client extends javax.swing.JFrame{
      * @param message : mensagem a ser enviada
      */
     private void sendMessage(String message) {
-
         PrintWriter pw = new PrintWriter(output, true);
         pw.println(message);
         
@@ -126,6 +133,10 @@ public class Client extends javax.swing.JFrame{
         this.setVisible(true);
     }
     
+    /**
+     * Método que conceta o cliente ao servidor e inicia a thread que vai
+     * escutar as mensagens recebidas
+     */
     private void connectServer(){
         try {
             //Cria socket
@@ -135,12 +146,24 @@ public class Client extends javax.swing.JFrame{
             //Manda primeira mensagem que é o nome do cliente
             PrintWriter pw = new PrintWriter(output, true);
             pw.println(this.clientUserID);
-            tL = new TextListenerThread(clientSocket.getInputStream(), this.jTextArea);
-            tL.start();
+            //Cria thread que vai tratar das mensagens recebidas e da caixa de
+            //textos da tela do cliente
+            textListener = new TextListenerThread
+                               (clientSocket.getInputStream(), this.jTextArea);
+            textListener.start();
             
         } catch (IOException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null,ex);
         }
+    }
+    
+    /**
+     * Método que exibe como mandar mensagem privada
+     */
+    private void showHowToPrivate(){
+        JOptionPane.showMessageDialog(this, "Para mandar uma mensagem privada, "
+                + " digite @ seguido do usuário desejado e após um espaço a "
+                + "mensagem, exemplo: @Usuario mensagem privada");
     }
     
     /**
@@ -157,7 +180,7 @@ public class Client extends javax.swing.JFrame{
         client.configScreen();
         //Chama método que cria socket e conecta com servidor
         client.connectServer();
-        //Cria thread que escuta e modifica a caixa de texto dos usuários
-        
+        //Mostra menssagem de como mandar mensagem privada
+        client.showHowToPrivate();
     }
 }
